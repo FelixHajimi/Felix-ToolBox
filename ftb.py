@@ -3,7 +3,6 @@ import os
 import sys
 import logging
 import importlib.util as pathImport
-import rich
 
 logging.basicConfig(
     filename="./last.log",
@@ -52,4 +51,4 @@ for id, config in commandConfig.items():
         break
 if not action:
     logging.error("未找到该命令")
-    rich.print("[red bold]ERROR: 未找到该命令[/]")
+    print("ERROR: 未找到该命令")
