@@ -110,26 +110,30 @@ def enterance(path: str, encoding: str):
             # 控制键
             if key == 27:
                 mode = "COMMAND"
-            elif key == curses.KEY_UP and curY > 0:
-                if len(fileContent[curY - 1]) < curX:
-                    curX = len(fileContent[curY - 1])
-                curY -= 1
-            elif key == curses.KEY_DOWN and curY < len(fileContent) - 1:
-                if len(fileContent[curY + 1]) < curX:
-                    curX = len(fileContent[curY + 1])
-                curY += 1
-            elif key == curses.KEY_LEFT and curX >= 0:
-                if curX > 0:
-                    curX -= 1
-                elif curX == 0 and curY > 0:
-                    curX = len(fileContent[curY - 1])
+            elif key == curses.KEY_UP:
+                if  curY > 0:
+                    if len(fileContent[curY - 1]) < curX:
+                        curX = len(fileContent[curY - 1])
                     curY -= 1
-            elif key == curses.KEY_RIGHT and curX <= len(fileContent[curY]):
-                if curX < len(fileContent[curY]):
-                    curX += 1
-                elif curX == len(fileContent[curY]) and curY < len(fileContent) - 1:
-                    curX = 0
+            elif key == curses.KEY_DOWN:
+                if curY < len(fileContent) - 1:
+                    if len(fileContent[curY + 1]) < curX:
+                        curX = len(fileContent[curY + 1])
                     curY += 1
+            elif key == curses.KEY_LEFT:
+                if curX >= 0:
+                    if curX > 0:
+                        curX -= 1
+                    elif curX == 0 and curY > 0:
+                        curX = len(fileContent[curY - 1])
+                        curY -= 1
+            elif key == curses.KEY_RIGHT:
+                if curX <= len(fileContent[curY]):
+                    if curX < len(fileContent[curY]):
+                        curX += 1
+                    elif curX == len(fileContent[curY]) and curY < len(fileContent) - 1:
+                        curX = 0
+                        curY += 1
             # 模式判断
             elif mode == "COMMAND":
                 if key == ord("w"):
