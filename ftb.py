@@ -17,7 +17,6 @@ commands = {
     ".".join(path.split(".")[:-1]): f"./command/{path}"
     for path in os.listdir("./command/")
 }
-action = False
 
 
 def runFunc(func, config: str, argsStart: int):
@@ -30,7 +29,7 @@ def runFunc(func, config: str, argsStart: int):
             if arg[0] == "<" and arg[-1] == ">":
                 data[arg[1:-1]] = args[index + argsStart]
             elif arg[0] == "[" and arg[-1] == "]":
-                if len(args[argsStart:]) >= index + argsStart:
+                if len(args[argsStart-1:]) >= index + argsStart:
                     data[arg[1:-1].split(":")[0]] = args[index + argsStart]
                 else:
                     data[arg[1:-1].split(":")[0]] = arg[1:-1].split(":")[1]
@@ -47,8 +46,6 @@ for id, config in commandConfig.items():
         func = pathImport.module_from_spec(spec)
         spec.loader.exec_module(func)
         runFunc(func.enterance, config, len(args[: len(id.split("."))]))
-        action = True
-        break
-if not action:
-    logging.error("未找到该命令")
-    print("ERROR: 未找到该命令")
+        exit()
+logging.error("未找到该命令")
+print("ERROR: 未找到该命令")
