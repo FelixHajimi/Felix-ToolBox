@@ -26,13 +26,23 @@ def runFunc(func, config: str, argsStart: int):
         config = config[2:].split(" ")
         data = {}
         for index, arg in enumerate(config):
-            if arg[0] == "<" and arg[-1] == ">":
-                data[arg[1:-1]] = args[index + argsStart]
-            elif arg[0] == "[" and arg[-1] == "]":
-                if len(args[argsStart-1:]) >= index + argsStart:
-                    data[arg[1:-1].split(":")[0]] = args[index + argsStart]
-                else:
-                    data[arg[1:-1].split(":")[0]] = arg[1:-1].split(":")[1]
+            try:
+                if arg[0] == "<" and arg[-1] == ">":
+                    data[arg[1:-1]] = args[index + 1 + argsStart]
+                elif arg[0] == "[" and arg[-1] == "]":
+                    if ":" in arg:
+                        if len(args) - 1 >= index + 1 + argsStart:
+                            data[arg[1:-1].split(":")[0]] = args[index + 1 + argsStart]
+                        else:
+                            data[arg[1:-1].split(":")[0]] = arg[1:-1].split(":")[1]
+                    else:
+                        data[arg[1:-1]] = (
+                            args[index + 1 + argsStart]
+                            if len(args) - 1 >= index + 1 + argsStart
+                            else ""
+                        )
+            except IndexError as error:
+                print(f"索引选取错误: {error}")
         func(**data)
 
 
@@ -45,7 +55,7 @@ for id, config in commandConfig.items():
         spec = pathImport.spec_from_file_location("func", commands[id])
         func = pathImport.module_from_spec(spec)
         spec.loader.exec_module(func)
-        runFunc(func.enterance, config, len(args[: len(id.split("."))]))
+        runFunc(func.enterance, config, len(args[: len(id.split("."))]) - 1)
         exit()
 logging.error("未找到该命令")
 print("ERROR: 未找到该命令")
