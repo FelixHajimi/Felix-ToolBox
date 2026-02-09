@@ -6,5 +6,7 @@
   "file.move": "- <path> <newPath>",
   "file.rename": "- <path> <newName>",
   
-  "fex": "- <path> [encoding:utf-8]"
+  "fex": "- <path> [encoding:utf-8]",
+
+  "query.cmd": "- [id]"
 }
