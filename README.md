@@ -11,6 +11,7 @@ python ftb.py 命令名 参数...
 ```
 
 例如
+
 ```sh
 python ftb.py fex notes.txt
 python ftb.py file add temp.txt
@@ -22,7 +23,7 @@ python ftb.py file add temp.txt
 
 ### 命令要求
 
-- 命令入口函数命名为 enterance 并接受命名参数
+- 命令入口函数命名为 enter 并接受命名参数
 - 所有命令必须返回用户可读的反馈信息
 - 命令模块放在 ./command/ 目录下 文件名即命令名
 - 可使用 logging 模块记录运行日志 日志路径为 ./last.log
@@ -41,4 +42,4 @@ python ftb.py file add temp.txt
 
 其中,`-`为此条命令本身;`<*>`为必填项;`[*]`为可填项,通过`:`后的字符定义默认值
 
-框架会自动解析命令行输入 并将参数以关键字形式传入 enterance 函数
+框架会自动解析命令行输入 并将参数以关键字形式传入 enter 函数

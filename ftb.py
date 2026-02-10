@@ -55,7 +55,7 @@ for id, config in commandConfig.items():
         spec = pathImport.spec_from_file_location("func", commands[id])
         func = pathImport.module_from_spec(spec)
         spec.loader.exec_module(func)
-        runFunc(func.enterance, config, len(args[: len(id.split("."))]) - 1)
+        runFunc(func.enter, config, len(args[: len(id.split("."))]) - 1)
         exit()
 logging.error("未找到该命令")
 print("ERROR: 未找到该命令")
