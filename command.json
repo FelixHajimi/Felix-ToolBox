@@ -5,8 +5,15 @@
   "file.load": "- <path> [encoding:utf-8]",
   "file.move": "- <path> <newPath>",
   "file.rename": "- <path> <newName>",
-  
-  "fex": "- <path> [encoding:utf-8]",
 
-  "query.cmd": "- [id]"
+  "dir": "-",
+  "dir.add": "- <path>",
+  "dir.del": "- <path>",
+  "dir.rename": "- <path> <newPath>",
+  
+  "query": "-",
+  "query.cmd": "- [id]",
+  "query.path": "- [path]",
+
+  "fex": "- <path> [encoding:utf-8]"
 }
