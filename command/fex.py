@@ -3,7 +3,7 @@ import os
 import logging
 
 
-def enterance(path: str, encoding: str):
+def enter(path: str, encoding: str):
     def main(stdscr: curses.window):
         run = True
         mode = "COMMAND"
@@ -29,12 +29,9 @@ def enterance(path: str, encoding: str):
             elif command[0] == "length":
                 try:
                     if len(command) == 1:
-                        res = 0
-                        for line in fileContent:
-                            res += len(line)
-                        return f"此文件共有 {res} 字符"
+                        return f"此文件共有 {len("\n".join(fileContent))} 个字符"
                     elif len(command) == 2:
-                        return f"第 {int(command[1])} 行有 {len(fileContent[int(command[1]) - 1])} 字符"
+                        return f"第 {int(command[1])} 行有 {len(fileContent[int(command[1]) - 1])} 个字符"
                     else:
                         return "用法: length [lineNumber]"
                 except Exception as error:
@@ -62,7 +59,9 @@ def enterance(path: str, encoding: str):
                     return f"错误: {error}"
             elif command[0] == "saveto":
                 try:
-                    open(command[1], "a", encoding=command[2]).write("\n".join(fileContent))
+                    open(command[1], "a", encoding=command[2]).write(
+                        "\n".join(fileContent)
+                    )
                     return f"文件已保存至 {os.path.abspath(command[1])}"
                 except Exception as error:
                     return f"错误: {error}"
@@ -111,7 +110,7 @@ def enterance(path: str, encoding: str):
             if key == 27:
                 mode = "COMMAND"
             elif key == curses.KEY_UP:
-                if  curY > 0:
+                if curY > 0:
                     if len(fileContent[curY - 1]) < curX:
                         curX = len(fileContent[curY - 1])
                     curY -= 1
@@ -225,7 +224,7 @@ def enterance(path: str, encoding: str):
                     curY += 1
                     curX = 0
                 else:
-                    if 32 <= key <= 126 or key >= 128:
+                    if 32 <= key <= 126:
                         if curX < width - 3:
                             char = chr(key)
                             fileContent[curY] = (
