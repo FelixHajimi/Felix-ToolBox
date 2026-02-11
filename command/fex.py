@@ -1,9 +1,10 @@
 import curses
 import os
 import logging
+import importlib.util as pathImport
 
 
-def enter(path: str, encoding: str):
+def enter(path: str, encoding: str, plugin: str):
     def main(stdscr: curses.window):
         run = True
         mode = "COMMAND"
@@ -11,6 +12,8 @@ def enter(path: str, encoding: str):
         viewOffset = 0
         stateText = f"{mode}: {curY+1} - {curX}"
         pause = False
+        highlight = []
+        commands = []
 
         try:
             fileContent = open(path, encoding=encoding).read().split("\n")
@@ -38,21 +41,21 @@ def enter(path: str, encoding: str):
                     return f"错误: {error}"
             elif command[0] == "info":
                 try:
-                    label = text[5:]
+                    label = " ".join(command[1:])
                     logging.info(label)
                     return label[: width - 1]
                 except Exception as error:
                     return f"错误: {error}"
             elif command[0] == "warn":
                 try:
-                    label = text[5:]
+                    label = " ".join(command[1:])
                     logging.warning(label)
                     return label[: width - 1]
                 except Exception as error:
                     return f"错误: {error}"
             elif command[0] == "error":
                 try:
-                    label = text[5:]
+                    label = " ".join(command[1:])
                     logging.error(label)
                     return label[: width - 1]
                 except Exception as error:
@@ -65,8 +68,17 @@ def enter(path: str, encoding: str):
                     return f"文件已保存至 {os.path.abspath(command[1])}"
                 except Exception as error:
                     return f"错误: {error}"
-            else:
-                return "未找到该命令"
+            elif command[0] == "exec":
+                try:
+                    exec(" ".join(command[1:]))
+                    return "执行成功!"
+                except Exception as error:
+                    return f"错误: {error}"
+            for func in commands:
+                text = func(command)
+                if text:
+                    return text
+            return "未找到该命令"
 
         curses.start_color()
         curses.use_default_colors()
@@ -74,7 +86,15 @@ def enter(path: str, encoding: str):
         curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_BLUE)
         curses.init_pair(3, curses.COLOR_YELLOW, -1)
         curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_GREEN)
+
+        if plugin != "":
+            spec = pathImport.spec_from_file_location("highlight", plugin)
+            module = pathImport.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            module.ready({"commands": commands})
         while run:
+            if plugin != "":
+                module.update({"highlight": highlight, "fileContent": fileContent, "path": path})
             # 主要渲染
             height, width = stdscr.getmaxyx()
             stdscr.clear()
@@ -83,15 +103,25 @@ def enter(path: str, encoding: str):
                 f" {os.path.abspath(path)} - {encoding} ".center(width, "="),
                 curses.color_pair(3),
             )
-            for index, text in enumerate(
+            for row, text in enumerate(
                 fileContent[viewOffset : viewOffset + height - 2]
             ):
-                lineNumber = f"{index + 1 + viewOffset:>{len(str(len(fileContent)))}} "
-                stdscr.addstr(index + 1, 0, lineNumber, curses.color_pair(1))
+                lineNumber = f"{row + 1 + viewOffset:>{len(str(len(fileContent)))}} "
+                stdscr.addstr(row + 1, 0, lineNumber, curses.color_pair(1))
                 if width - len(lineNumber) > 0:
-                    stdscr.addstr(
-                        index + 1, len(lineNumber), text[: width - len(lineNumber)]
-                    )
+                    for column, char in enumerate(text[: width - len(lineNumber)]):
+                        action = False
+                        for value in highlight:
+                            if (
+                                value[0][0][0] <= row <= value[0][1][0]
+                                and value[0][0][1] <= column <= value[0][1][1]
+                            ):
+                                stdscr.addch(
+                                    row + 1, len(lineNumber) + column, char, value[1]
+                                )
+                                action = True
+                        if not action:
+                            stdscr.addch(row + 1, len(lineNumber) + column, char)
 
             if not pause:
                 stateText = f"{mode}: {curY+1} - {curX}"
@@ -166,8 +196,8 @@ def enter(path: str, encoding: str):
                         "写入模式: 你可以在文件中进行编辑",
                         "  [*]            在文件对应位置写入文本",
                     ]
-                    for index, label in enumerate(text):
-                        stdscr.addstr(index, 0, label)
+                    for row, label in enumerate(text):
+                        stdscr.addstr(row, 0, label)
                     stdscr.getch()
                 elif key == ord("/"):
                     stateText = ""
