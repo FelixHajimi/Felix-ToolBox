@@ -41,8 +41,6 @@ def update(highlight: dict[str, list | str]):
     global ranges
 
     if highlight["path"].endswith(".json"):
-        for range_ in ranges:
-            del range_
         ranges = []
         highlight["highlight"].clear()
         for row, line in enumerate(highlight["fileContent"]):
