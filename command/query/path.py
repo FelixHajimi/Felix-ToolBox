@@ -31,7 +31,7 @@ def config(path: str, lang: str, debug: str, tools: dict):
 
 
 def enter(path: str):
-    if path == "":
+    if path is None:
         for file in os.listdir():
             p = pathlib.Path(os.path.abspath(file))
             print(
