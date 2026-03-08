@@ -75,7 +75,7 @@ def config(path: str, lang: str, debug: str, tools: dict):
 
 
 def enter(mode: str, data: str, configs: str):
-    if configs != "":
+    if not configs is None:
         config = {item.split("=")[0]: item.split("=")[-1] for item in configs.split(";")}
     else:
         config = {"encoding": "utf-8"}
