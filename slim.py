@@ -102,7 +102,7 @@ def runFunc(enter, config: str, argStartIndex: int):
                 else:
                     print("ERROR")
             except IndexError:
-                print(eval(tran.run("indexError")))
+                print(eval(tran.run("requiredError")))
                 return
         enter(**data)
 
