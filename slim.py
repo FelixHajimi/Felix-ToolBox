@@ -7,40 +7,40 @@ import re
 import sys
 
 
-def runFunc(func, config: str, argsStart: int):
+def runFunc(enter, config: str, argStartIndex: int):
     if config == "-":
-        func()
+        enter()
     else:
         configSplit = config[2:].split(" ")
         data = {}
         for index, arg in enumerate(configSplit):
             try:
                 if arg[0] == "<" and arg[-1] == ">":
-                    data[arg[1:-1]] = args[index + 1 + argsStart]
+                    data[arg[1:-1]] = args[index + 1 + argStartIndex]
                 elif arg[0] == "[" and arg[-1] == "]":
                     if ":" in arg:
-                        if len(args) - 1 >= index + 1 + argsStart:
-                            data[arg[1:-1].split(":")[0]] = args[index + 1 + argsStart]
+                        if len(args) - 1 >= index + 1 + argStartIndex:
+                            data[arg[1:-1].split(":")[0]] = args[index + 1 + argStartIndex]
                         else:
                             data[arg[1:-1].split(":")[0]] = arg[1:-1].split(":")[1]
                     else:
                         data[arg[1:-1]] = (
-                            args[index + 1 + argsStart]
-                            if len(args) - 1 >= index + 1 + argsStart
+                            args[index + 1 + argStartIndex]
+                            if len(args) - 1 >= index + 1 + argStartIndex
                             else None
                         )
                 elif arg[0] == "@":
-                    match = re.fullmatch(r"([a-zA-Z\d]+)(\(.*\))?(:\d+)?", arg[1:])
+                    match = re.fullmatch(r"([a-zA-Z_][a-zA-Z\d_]*)(\(.*\))?(:\d+)?", arg[1:])
                     if not match or not match.group(1):
                         continue
 
                     if not match.group(3):
-                        data[match.group(1)] = args[index + 1 + argsStart :]
+                        data[match.group(1)] = args[index + 1 + argStartIndex :]
                     else:
                         data[match.group(1)] = args[
-                            index + 1 + argsStart : index
+                            index + 1 + argStartIndex : index
                             + 1
-                            + argsStart
+                            + argStartIndex
                             + int(match.group(3)[1:])
                         ]
                     if match.group(2):
@@ -55,7 +55,7 @@ def runFunc(func, config: str, argsStart: int):
             except IndexError as error:
                 print(tran.run("indexError", f"<?>{error}\n{config}"))
                 return
-        func(**data)
+        enter(**data)
 
 
 def runAdminFunc(adminArgs: list[str]):
@@ -71,8 +71,8 @@ def runAdminFunc(adminArgs: list[str]):
             tran = Tran(TRAN, SETTING["language"])
             commands = json.load(open(f"{PATH}/command.json", encoding="utf-8"))
             if id is None:
-                for id, format in commands.items():
-                    print(f"{id} : {format}")
+                for id, config in commands.items():
+                    print(f"{id} : {config}")
             else:
                 try:
                     print(f"{id} : {commands[id]}")
@@ -80,18 +80,18 @@ def runAdminFunc(adminArgs: list[str]):
                     logging.error(f"{tran.run('notFoundCommand')}{id}")
                     print(f"{tran.run('notFoundCommand')}{id}")
 
-        def create(self, id: str | None, format: str | None):
+        def create(self, id: str | None, config: str | None):
             TRAN = {
                 "zh-cn": {"createdFile": "已创建新文件至: "},
                 "en-us": {"createdFile": "A new file has been created at: "},
             }
             tran = Tran(TRAN, SETTING["language"])
-            config = json.load(
+            commandConfig = json.load(
                 open(f"{PATH}/{SETTING['commandConfig']}", encoding="utf-8")
             )
-            if id is None and format is None:
-                for id, format in config.items():
-                    if id is None or format is None:
+            if id is None and config is None:
+                for id, config in commandConfig.items():
+                    if id is None or config is None:
                         return
                     path = (
                         f"{PATH}/{SETTING['commandDir']}/{'/'.join(id.split('.'))}.py"
@@ -100,7 +100,7 @@ def runAdminFunc(adminArgs: list[str]):
                     if not p.exists():
                         p.touch()
                         argsText = ""
-                        for arg in format.split(" ")[1:]:
+                        for arg in config.split(" ")[1:]:
                             if arg[0] == "<" and arg[-1] == ">":
                                 argsText = f"{argsText}, {arg[1:-1]}: str"
                             elif arg[0] == "[" and arg[-1] == "]":
@@ -110,9 +110,9 @@ def runAdminFunc(adminArgs: list[str]):
                         )
                         print(tran.run("createdFile", f"<?>{path}"))
             else:
-                config[id] = "-" if format is None else format
+                commandConfig[id] = "-" if config is None else config
                 open(SETTING["commandConfig"], "w", encoding="utf-8").write(
-                    json.dumps(config, indent=2, ensure_ascii=False)
+                    json.dumps(commandConfig, indent=2, ensure_ascii=False)
                 )
                 print(tran.run("createdFile", f"<?>{SETTING['commandConfig']}"))
                 self.create(None, None)
@@ -158,7 +158,7 @@ logging.basicConfig(
 )
 
 
-PATH = os.path.dirname(__file__)
+PATH = os.path.dirname(os.path.abspath(__file__))
 TRAN = {
     "zh-cn": {"indexError": "索引选取错误: ", "notFoundCommand": "未找到该命令"},
     "en-us": {
@@ -191,6 +191,7 @@ configArgs = {
     "path": PATH,
     "lang": SETTING["language"],
     "debug": SETTING["debug"],
+    "other": SETTING["other"],
     "tools": {"tran": Tran},
 }
 
