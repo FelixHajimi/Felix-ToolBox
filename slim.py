@@ -7,57 +7,102 @@ import re
 import sys
 
 
+def configParser(config: str):
+    args = config.split(" ")[1:]
+    res = []
+    for arg in args:
+        match1 = re.fullmatch(r"<(@)?([a-zA-Z_][a-zA-Z_\d]*)?(\(.*\))?(:\d+)?>", arg)
+        match2 = re.fullmatch(
+            r"\[(@)?([a-zA-Z_][a-zA-Z_\d]*)?(\(.*\))?(:\d+)?(=.*)?\]", arg
+        )
+        if match1:
+            if not match1.group(2):
+                raise SyntaxError(f"请填写参数名: {arg}")
+            res.append(
+                {
+                    "type": 1,
+                    "array": bool(match1.group(1)),
+                    "name": match1.group(2),
+                    "regex": match1.group(3)[1:-1] if match1.group(3) else None,
+                    "number": int(match1.group(4)[1:]) if match1.group(4) else None,
+                }
+            )
+        elif match2:
+            if not match2.group(2):
+                raise SyntaxError(f"请填写参数名: {arg}")
+            res.append(
+                {
+                    "type": 2,
+                    "array": bool(match2.group(1)),
+                    "name": match2.group(2),
+                    "regex": match2.group(3)[1:-1] if match2.group(3) else None,
+                    "number": int(match2.group(4)[1:]) if match2.group(4) else None,
+                    "default": match2.group(5)[1:] if match2.group(5) else None,
+                }
+            )
+        else:
+            raise SyntaxError(f"没有匹配此格式的参数: {arg}")
+    return res
+
+
 def runFunc(enter, config: str, argStartIndex: int):
     if config == "-":
         enter()
     else:
-        configSplit = config[2:].split(" ")
         data = {}
-        for index, arg in enumerate(configSplit):
+        parser = configParser(config)
+        for index, arg in enumerate(parser):
+            argIndex = argStartIndex + index + 1
             try:
-                if arg[0] == "<" and arg[-1] == ">":
-                    data[arg[1:-1]] = args[index + 1 + argStartIndex]
-                elif arg[0] == "[" and arg[-1] == "]":
-                    if ":" in arg:
-                        if len(args) - 1 >= index + 1 + argStartIndex:
-                            data[arg[1:-1].split(":")[0]] = args[
-                                index + 1 + argStartIndex
-                            ]
+                if arg["type"] == 1:
+                    if arg["array"]:
+                        if arg["number"] is None:
+                            data[arg["name"]] = args[argIndex:]
                         else:
-                            data[arg[1:-1].split(":")[0]] = arg[1:-1].split(":")[1]
+                            data[arg["name"]] = args[
+                                argIndex : argIndex + arg["number"]
+                            ]
+                            for i in range(arg["number"] - len(data[arg["name"]])):
+                                data[arg["name"]].append(None)
+                        if arg["regex"] is not None:
+                            for index, text in enumerate(data[arg["name"]]):
+                                data[arg["name"]][index] = (
+                                    text
+                                    if re.fullmatch(arg["regex"], text if text else "")
+                                    else None
+                                )
                     else:
-                        data[arg[1:-1]] = (
-                            args[index + 1 + argStartIndex]
-                            if len(args) - 1 >= index + 1 + argStartIndex
-                            else None
-                        )
-                elif arg[0] == "@":
-                    match = re.fullmatch(
-                        r"([a-zA-Z_][a-zA-Z\d_]*)(\(.*\))?(:\d+)?", arg[1:]
-                    )
-                    if not match or not match.group(1):
-                        continue
-
-                    if not match.group(3):
-                        data[match.group(1)] = args[index + 1 + argStartIndex :]
+                        data[arg["name"]] = args[argIndex]
+                elif arg["type"] == 2:
+                    if arg["array"]:
+                        if arg["number"] is None:
+                            data[arg["name"]] = args[argIndex:]
+                        else:
+                            data[arg["name"]] = args[
+                                argIndex : argIndex + arg["number"]
+                            ]
+                            for i in range(arg["number"] - len(data[arg["name"]])):
+                                data[arg["name"]].append(None)
+                        if arg["regex"] is not None:
+                            for index, text in enumerate(data[arg["name"]]):
+                                data[arg["name"]][index] = (
+                                    text
+                                    if re.fullmatch(arg["regex"], text if text else "")
+                                    else arg["default"]
+                                    if arg["default"]
+                                    else None
+                                )
                     else:
-                        data[match.group(1)] = args[
-                            index + 1 + argStartIndex : index
-                            + 1
-                            + argStartIndex
-                            + int(match.group(3)[1:])
-                        ]
-                    if match.group(2):
-                        for idx, item in enumerate(data[match.group(1)]):
-                            if not re.fullmatch(match.group(2)[1:-1], item):
-                                data[match.group(1)][idx] = None
-                    if match.group(3):
-                        for idx in range(
-                            int(match.group(3)[1:]) - len(data[match.group(1)])
-                        ):
-                            data[match.group(1)].append(None)
-            except IndexError as error:
-                print(tran.run("indexError", f"<?>{error}\n{config}"))
+                        if argIndex > len(args) - 1:
+                            data[arg["name"]] = (
+                                arg["default"] if arg["default"] else None
+                            )
+                        else:
+                            data[arg["name"]] = args[argIndex]
+                else:
+                    print("ERROR")
+            except IndexError:
+                print(eval(tran.run("indexError")))
                 return
         enter(**data)
 
@@ -67,11 +112,6 @@ class AdminCommands:
         self.debug = debug
 
     def help(self, id: str | None):
-        TRAN = {
-            "zh-cn": {"notFoundCommand": "未找到此命令: "},
-            "en-us": {"notFoundCommand": "Not found this command: "},
-        }
-        tran = Tran(TRAN, SETTING["language"])
         commands = json.load(open(f"{PATH}/command.json", encoding="utf-8"))
         if id is None:
             for id, config in commands.items():
@@ -84,11 +124,6 @@ class AdminCommands:
                 print(f"{tran.run('notFoundCommand')}{id}")
 
     def create(self, id: str | None, config: str | None):
-        TRAN = {
-            "zh-cn": {"createdFile": "已创建新文件至: "},
-            "en-us": {"createdFile": "A new file has been created at: "},
-        }
-        tran = Tran(TRAN, SETTING["language"])
         commandConfig = json.load(
             open(f"{PATH}/{SETTING['commandConfig']}", encoding="utf-8")
         )
@@ -101,11 +136,16 @@ class AdminCommands:
                 if not p.exists():
                     p.touch()
                     argsText = ""
-                    for arg in config.split(" ")[1:]:
-                        if arg[0] == "<" and arg[-1] == ">":
-                            argsText = f"{argsText}, {arg[1:-1]}: str"
-                        elif arg[0] == "[" and arg[-1] == "]":
-                            argsText = f"{argsText}, {arg[1:-1].split(':')[0]}: str"
+                    for arg in configParser(config):
+                        argsText = (
+                            f"{argsText}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str'}"
+                            if arg["type"] == 1
+                            else (
+                                f"{argsText}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str | None'}"
+                                if arg["type"] == 2
+                                else f"{argsText}, ERROR"
+                            )
+                        )
                     open(path, "w", encoding="utf-8").write(
                         f"def config(**args):\n    pass\n\ndef enter({argsText[2:]}):\n    pass"
                     )
@@ -120,11 +160,10 @@ class AdminCommands:
 
 
 def runAdminFunc(adminArgs: list[str]):
-
     admin = AdminCommands(SETTING["debug"])
     adminCommands = {
         "help": ("- [id]", admin.help),
-        "create": ("- [id] [format]", admin.create),
+        "create": ("- [id] [config]", admin.create),
     }
     adminCommands = {
         key: adminCommands[key]
@@ -134,8 +173,8 @@ def runAdminFunc(adminArgs: list[str]):
         if command == ".".join(adminArgs[: len(command.split("."))]):
             runFunc(config[1], config[0], len(command.split(".")))
             exit()
-    logging.error(tran.run("notFoundCommand"))
-    print(tran.run("notFoundCommand", "ERROR: <?>"))
+    logging.error(tran.run("notFoundCommand", f"<?>: {args}"))
+    print(tran.run("notFoundCommand", f"<?>: {args}"))
 
 
 class Tran:
@@ -164,7 +203,11 @@ logging.basicConfig(
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 TRAN = {
-    "zh-cn": {"indexError": "索引选取错误: ", "notFoundCommand": "未找到该命令"},
+    "zh-cn": {
+        "requiredError": 'f"你有一个必填项未填写: 应该在第{index}个参数填写,参数名为{arg["name"]}"',
+        "notFoundCommand": "未找到该命令: ",
+        "createdFile": "已创建文件至: ",
+    },
     "en-us": {
         "indexError": "Index selection error: ",
         "notFoundCommand": "Not found this command",
@@ -211,5 +254,5 @@ for id, config in commandConfig.items():
             getattr(func, "config")(**configArgs)
         runFunc(func.enter, config, len(args[: len(id.split("."))]) - 1)
         exit()
-logging.error(tran.run("notFoundCommand"))
-print(tran.run("notFoundCommand", "ERROR: <?>"))
+logging.error(tran.run("notFoundCommand", f"<?>: {args}"))
+print(tran.run("notFoundCommand", f"<?>: {args}"))
