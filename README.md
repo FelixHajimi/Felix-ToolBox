@@ -99,7 +99,7 @@ def enter(output_dir: str, quality: str, images: list[str]):
 
 Configure an alias for quick calling (optional):
 ```bash
-function slim { python slim.py @args;}
+function slim { python slim.py $@;}
 ```
 
 Execute command:
