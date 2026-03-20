@@ -18,7 +18,9 @@ def configParser(config: str):
         if match1:
             if not match1.group(2):
                 logging.error(tran.run("fillName", f"<?>{arg}"))
-                print(f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m")
+                print(
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m"
+                )
             res.append(
                 {
                     "type": 1,
@@ -31,7 +33,9 @@ def configParser(config: str):
         elif match2:
             if not match2.group(2):
                 logging.error(tran.run("fillName", f"<?>{arg}"))
-                print(f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m")
+                print(
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m"
+                )
             res.append(
                 {
                     "type": 2,
@@ -44,7 +48,9 @@ def configParser(config: str):
             )
         else:
             logging.error(tran.run("notMatchFormat", f"<?>{arg}"))
-            print(f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notMatchFormat', f'<?>{arg}')}\033[0m")
+            print(
+                f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notMatchFormat', f'<?>{arg}')}\033[0m"
+            )
     return res
 
 
@@ -103,11 +109,13 @@ def runFunc(enter, config: str, argStartIndex: int):
                         else:
                             data[arg["name"]] = args[argIndex]
                 else:
-                    logging.error(f"{tran.run("notFoundFormat")}{arg['type']}")
-                    print(f"{tran.run("notFoundFormat")}{arg['type']}")
+                    logging.error(f"{tran.run('notFoundFormat')}{arg['type']}")
+                    print(f"{tran.run('notFoundFormat')}{arg['type']}")
             except IndexError:
                 logging.error(eval(tran.run("requiredError")))
-                print(f"\033[48;2;255;0;0;38;2;255;255;255m{eval(tran.run('requiredError'))}\033[0m")
+                print(
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{eval(tran.run('requiredError'))}\033[0m"
+                )
                 return
         enter(**data)
 
@@ -126,7 +134,9 @@ class AdminCommands:
                 print(f"{id} : {commands[id]}")
             except KeyError:
                 logging.error(f"{tran.run('notFoundCommand')}{id}")
-                print(f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand')}{id}\033[0m")
+                print(
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand')}{id}\033[0m"
+                )
 
     def create(self, id: str | None, config: str | None):
         commandConfig = json.load(
@@ -181,7 +191,9 @@ def runAdminFunc(adminArgs: list[str]):
             runFunc(config[1], config[0], len(command.split(".")))
             exit()
     logging.error(tran.run("notFoundCommand", f"<?>{args}"))
-    print(f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand', f'<?>{args}')}\033[0m")
+    print(
+        f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand', f'<?>{args}')}\033[0m"
+    )
 
 
 class Tran:
@@ -277,7 +289,9 @@ for id, config in commandConfig.items():
             spec.loader.exec_module(func)
         except Exception:
             logging.warning(tran.run("notFoundCommandFile"))
-            print(f"\033[48;2;255;255;0;38;2;255;255;255m{tran.run("notFoundCommandFile")}\033[0m")
+            print(
+                f"\033[48;2;255;255;0;38;2;255;255;255m{tran.run('notFoundCommandFile')}\033[0m"
+            )
             exit()
         if hasattr(func, "config"):
             getattr(func, "config")(**configArgs)
@@ -285,4 +299,6 @@ for id, config in commandConfig.items():
         runFunc(func.enter, config, len(args[: len(id.split("."))]) - 1)
         exit()
 logging.error(tran.run("notFoundCommand", f"<?>{args}"))
-print(f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand', f'<?>{args}')}\033[0m")
+print(
+    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand', f'<?>{args}')}\033[0m"
+)
