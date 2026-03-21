@@ -8,7 +8,7 @@ import sys
 
 
 def config_parser(config: str):
-    args = config.split(" ")[1:]
+    args = config.split(" ")
     res = []
     for arg in args:
         match1 = re.fullmatch(
@@ -80,7 +80,7 @@ def to_type(text: str | None, type_: str | None):
 
 
 def run_func(enter, config: str, arg_start_index: int):
-    if config == "-":
+    if config == "":
         enter()
     else:
         data = {}
@@ -325,9 +325,12 @@ config_args = {
     "debug": SETTING["debug"],
     "other": SETTING["other"],
     "tools": {
-        "tran": Tran,
+        "Tran": Tran,
         "config_parser": config_parser,
         "run_func": run_func,
+        "to_type": to_type,
+        "AdminCommands": AdminCommands,
+        "run_admin_func": run_admin_func,
     },
 }
 
