@@ -75,7 +75,7 @@ def to_type(text: str | None, type_: str | None):
             try:
                 return f(text)
             except Exception as error:
-                logging.error(f"转换错误:{error}")
+                logging.error(f"{tran.run('conversion_error')}{error}")
                 return None
 
 
@@ -206,10 +206,10 @@ class AdminCommands:
                     args_text = ""
                     for arg in config_parser(config):
                         args_text = (
-                            f"{args_text}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str'}"
+                            f"{args_text}, {arg['name']}: {'list[any | None]' if arg['array'] else 'any'}"
                             if arg["type"] == 1
                             else (
-                                f"{args_text}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str | None'}"
+                                f"{args_text}, {arg['name']}: {'list[any | None]' if arg['array'] else 'any | None'}"
                                 if arg["type"] == 2
                                 else f"{args_text}, ERROR"
                             )
@@ -285,6 +285,7 @@ TRAN = {
         "running_command": "正在运行命令",
         "running_admin_command": "正在运行管理员命令",
         "not_found_format": "没有此格式: ",
+        "conversion_error": "转换错误: ",
     },
     "en-us": {
         "required_error": 'f"You have a required parameter not filled: should be filled at position {index}, parameter name is {arg["name"]}"',
@@ -296,6 +297,7 @@ TRAN = {
         "running_command": "Running command",
         "running_admin_command": "Running admin command",
         "not_found_format": "This format does not exist: ",
+        "conversion_error": "Conversion error: ",
     },
 }
 SETTING = json.load(open(f"{PATH}/setting.json", encoding="utf-8"))
