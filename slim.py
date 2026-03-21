@@ -11,39 +11,43 @@ def configParser(config: str):
     args = config.split(" ")[1:]
     res = []
     for arg in args:
-        match1 = re.fullmatch(r"<(@)?([a-zA-Z_][a-zA-Z_\d]*)?(\(.*\))?(:\d+)?>", arg)
+        match1 = re.fullmatch(
+            r"<([a-zA-Z_][a-zA-Z_\d]*)?(\(.*\))?(:\d+)?>(string|int|float|bool|json)?",
+            arg,
+        )
         match2 = re.fullmatch(
-            r"\[(@)?([a-zA-Z_][a-zA-Z_\d]*)?(\(.*\))?(:\d+)?(=.*)?\]", arg
+            r"\[([a-zA-Z_][a-zA-Z_\d]*)?(\(.*\))?(:\d+)?(=.*)?\](string|int|float|bool|json)?",
+            arg,
         )
         if match1:
-            if not match1.group(2):
+            if not match1.group(1):
                 logging.error(tran.run("fillName", f"<?>{arg}"))
                 print(
                     f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m"
                 )
             res.append(
                 {
-                    "type": 1,
-                    "array": bool(match1.group(1)),
-                    "name": match1.group(2),
-                    "regex": match1.group(3)[1:-1] if match1.group(3) else None,
-                    "number": int(match1.group(4)[1:]) if match1.group(4) else None,
+                    "class": 1,
+                    "name": match1.group(1),
+                    "regex": match1.group(2)[1:-1] if match1.group(2) else None,
+                    "length": int(match1.group(3)[1:]) if match1.group(3) else None,
+                    "type": match1.group(4) if match1.group(4) else "string",
                 }
             )
         elif match2:
-            if not match2.group(2):
+            if not match2.group(1):
                 logging.error(tran.run("fillName", f"<?>{arg}"))
                 print(
                     f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m"
                 )
             res.append(
                 {
-                    "type": 2,
-                    "array": bool(match2.group(1)),
-                    "name": match2.group(2),
-                    "regex": match2.group(3)[1:-1] if match2.group(3) else None,
-                    "number": int(match2.group(4)[1:]) if match2.group(4) else None,
-                    "default": match2.group(5)[1:] if match2.group(5) else None,
+                    "class": 2,
+                    "name": match2.group(1),
+                    "regex": match2.group(2)[1:-1] if match2.group(2) else None,
+                    "length": int(match2.group(3)[1:]) if match2.group(3) else None,
+                    "default": match2.group(4)[1:] if match2.group(4) else None,
+                    "type": match2.group(5) if match2.group(5) else "string",
                 }
             )
         else:
@@ -54,6 +58,27 @@ def configParser(config: str):
     return res
 
 
+def toType(text: str | None, type_: str | None):
+    if text is None or type_ is None:
+        return None
+    mapping = {
+        "string": str,
+        "int": int,
+        "float": float,
+        "bool": bool,
+        "json": json.loads,
+    }
+    for t, f in mapping.items():
+        if type_ == t:
+            if type_ == "json":
+                text = text.replace("'", '"')
+            try:
+                return f(text)
+            except Exception as error:
+                logging.error(f"转换错误:{error}")
+                return None
+
+
 def runFunc(enter, config: str, argStartIndex: int):
     if config == "-":
         enter()
@@ -62,56 +87,84 @@ def runFunc(enter, config: str, argStartIndex: int):
         parser = configParser(config)
         for index, arg in enumerate(parser):
             argIndex = argStartIndex + index + 1
+            argList: list
             try:
-                if arg["type"] == 1:
-                    if arg["array"]:
-                        if arg["number"] is None:
-                            data[arg["name"]] = args[argIndex:]
-                        else:
-                            data[arg["name"]] = args[
-                                argIndex : argIndex + arg["number"]
-                            ]
-                            for _ in range(arg["number"] - len(data[arg["name"]])):
-                                data[arg["name"]].append(None)
-                        if arg["regex"] is not None:
-                            for index, text in enumerate(data[arg["name"]]):
-                                data[arg["name"]][index] = (
-                                    text
-                                    if re.fullmatch(arg["regex"], text if text else "")
-                                    else None
+                if arg["class"] == 1:
+                    if arg["length"] or arg["length"] == 0:
+                        argList = (
+                            args[argIndex:]
+                            if arg["length"] == 0
+                            else args[argIndex : 1 + arg["length"]]
+                        )
+                        for _ in range(arg["length"] - len(argList)):
+                            argList.append(None)
+                        for index, text in enumerate(argList):
+                            value = None
+                            if arg["regex"]:
+                                value = toType(
+                                    text if re.fullmatch(arg["regex"], text) else None,
+                                    arg["type"],
                                 )
+                            else:
+                                value = toType(text, arg["type"])
+                            argList[index] = value
+                        data[arg["name"]] = argList
                     else:
-                        data[arg["name"]] = args[argIndex]
-                elif arg["type"] == 2:
-                    if arg["array"]:
-                        if arg["number"] is None:
-                            data[arg["name"]] = args[argIndex:]
-                        else:
-                            data[arg["name"]] = args[
-                                argIndex : argIndex + arg["number"]
-                            ]
-                            for _ in range(arg["number"] - len(data[arg["name"]])):
-                                data[arg["name"]].append(None)
-                        if arg["regex"] is not None:
-                            for index, text in enumerate(data[arg["name"]]):
-                                data[arg["name"]][index] = (
-                                    text
-                                    if re.fullmatch(arg["regex"], text if text else "")
-                                    else arg["default"]
-                                    if arg["default"]
-                                    else None
-                                )
-                    else:
-                        if argIndex > len(args) - 1:
-                            data[arg["name"]] = (
-                                arg["default"] if arg["default"] else None
+                        value = None
+                        if arg["regex"]:
+                            value = toType(
+                                args[argIndex]
+                                if re.fullmatch(arg["regex"], args[argIndex])
+                                else None,
+                                arg["type"],
                             )
                         else:
-                            data[arg["name"]] = args[argIndex]
+                            value = toType(args[argIndex], arg["type"])
+                        data[arg["name"]] = value
+                elif arg["class"] == 2:
+                    if arg["length"] or arg["length"] == 0:
+                        argList = (
+                            args[argIndex:]
+                            if arg["length"] == 0
+                            else args[argIndex : 1 + arg["length"]]
+                        )
+                        for _ in range(arg["length"] - len(argList)):
+                            argList.append(arg["default"])
+                        for index, text in enumerate(argList):
+                            value = None
+                            if len(args) - 1 >= argIndex:
+                                if arg["regex"]:
+                                    value = toType(
+                                        text
+                                        if re.fullmatch(arg["regex"], text)
+                                        else arg["default"],
+                                        arg["type"],
+                                    )
+                                else:
+                                    value = toType(text, arg["type"])
+                            else:
+                                value = toType(arg["default"], arg["type"])
+                            argList[index] = value
+                        data[arg["name"]] = argList
+                    else:
+                        value = None
+                        if len(args) - 1 >= argIndex:
+                            if arg["regex"]:
+                                value = toType(
+                                    args[argIndex]
+                                    if re.fullmatch(arg["regex"], args[argIndex])
+                                    else arg["default"],
+                                    arg["type"],
+                                )
+                            else:
+                                value = toType(args[argIndex], arg["type"])
+                        else:
+                            value = toType(arg["default"], arg["type"])
+                        data[arg["name"]] = value
                 else:
-                    logging.error(f"{tran.run('notFoundFormat')}{arg['type']}")
-                    print(f"{tran.run('notFoundFormat')}{arg['type']}")
-            except IndexError:
+                    logging.error(f"{tran.run('notFoundFormat')}{arg['class']}")
+                    print(f"{tran.run('notFoundFormat')}{arg['class']}")
+            except Exception:
                 logging.error(eval(tran.run("requiredError")))
                 print(
                     f"\033[48;2;255;0;0;38;2;255;255;255m{eval(tran.run('requiredError'))}\033[0m"
@@ -187,7 +240,7 @@ def runAdminFunc(adminArgs: list[str]):
     }
     for command, config in adminCommands.items():
         if command == ".".join(adminArgs[: len(command.split("."))]):
-            logging.info(tran.run("runningAdminCommand"))
+            logging.info(tran.run("runningAdminCommand", f"<?>:{args}"))
             runFunc(config[1], config[0], len(command.split(".")))
             exit()
     logging.error(tran.run("notFoundCommand", f"<?>{args}"))
@@ -295,7 +348,7 @@ for id, config in commandConfig.items():
             exit()
         if hasattr(func, "config"):
             getattr(func, "config")(**configArgs)
-        logging.info(tran.run("runningCommand"))
+        logging.info(tran.run("runningCommand", f"<?>:{args}"))
         runFunc(func.enter, config, len(args[: len(id.split("."))]) - 1)
         exit()
 logging.error(tran.run("notFoundCommand", f"<?>{args}"))
