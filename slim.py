@@ -242,7 +242,7 @@ def run_admin_func(admin_args: list[str]):
         if command == ".".join(admin_args[: len(command.split("."))]):
             logging.info(tran.run("running_admin_command", f"<?>:{args}"))
             run_func(config[1], config[0], len(command.split(".")))
-            exit()
+            return
     logging.error(tran.run("not_found_command", f"<?>{args}"))
     print(
         f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('not_found_command', f'<?>{args}')}\033[0m"
@@ -318,7 +318,7 @@ tran = Tran(TRAN, SETTING["language"])
 args = sys.argv[1:]
 if len(args) != 0 and args[0] == "--admin":
     run_admin_func(args[1:])
-    exit()
+    quit()
 
 
 config_args = {
@@ -350,12 +350,12 @@ for id, config in command_config.items():
             print(
                 f"\033[48;2;255;255;0;38;2;255;255;255m{tran.run('not_found_commandFile')}\033[0m"
             )
-            exit()
+            quit()
         if hasattr(func, "config"):
             getattr(func, "config")(**config_args)
         logging.info(tran.run("running_command", f"<?>:{args}"))
         run_func(func.enter, config, len(args[: len(id.split("."))]) - 1)
-        exit()
+        quit()
 logging.error(tran.run("not_found_command", f"<?>{args}"))
 print(
     f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('not_found_command', f'<?>{args}')}\033[0m"
