@@ -7,7 +7,7 @@ import re
 import sys
 
 
-def configParser(config: str):
+def config_parser(config: str):
     args = config.split(" ")[1:]
     res = []
     for arg in args:
@@ -21,9 +21,9 @@ def configParser(config: str):
         )
         if match1:
             if not match1.group(1):
-                logging.error(tran.run("fillName", f"<?>{arg}"))
+                logging.error(tran.run("fill_name", f"<?>{arg}"))
                 print(
-                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m"
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fill_name', f'<?>{arg}')}\033[0m"
                 )
             res.append(
                 {
@@ -36,9 +36,9 @@ def configParser(config: str):
             )
         elif match2:
             if not match2.group(1):
-                logging.error(tran.run("fillName", f"<?>{arg}"))
+                logging.error(tran.run("fill_name", f"<?>{arg}"))
                 print(
-                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fillName', f'<?>{arg}')}\033[0m"
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('fill_name', f'<?>{arg}')}\033[0m"
                 )
             res.append(
                 {
@@ -51,14 +51,14 @@ def configParser(config: str):
                 }
             )
         else:
-            logging.error(tran.run("notMatchFormat", f"<?>{arg}"))
+            logging.error(tran.run("not_match_format", f"<?>{arg}"))
             print(
-                f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notMatchFormat', f'<?>{arg}')}\033[0m"
+                f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('not_match_format', f'<?>{arg}')}\033[0m"
             )
     return res
 
 
-def toType(text: str | None, type_: str | None):
+def to_type(text: str | None, type_: str | None):
     if text is None or type_ is None:
         return None
     mapping = {
@@ -79,95 +79,95 @@ def toType(text: str | None, type_: str | None):
                 return None
 
 
-def runFunc(enter, config: str, argStartIndex: int):
+def run_func(enter, config: str, arg_start_index: int):
     if config == "-":
         enter()
     else:
         data = {}
-        parser = configParser(config)
+        parser = config_parser(config)
         for index, arg in enumerate(parser):
-            argIndex = argStartIndex + index + 1
-            argList: list
+            arg_index = arg_start_index + index + 1
+            arg_list: list
             try:
                 if arg["class"] == 1:
                     if arg["length"] or arg["length"] == 0:
-                        argList = (
-                            args[argIndex:]
+                        arg_list = (
+                            args[arg_index:]
                             if arg["length"] == 0
-                            else args[argIndex : 1 + arg["length"]]
+                            else args[arg_index : 1 + arg["length"]]
                         )
-                        for _ in range(arg["length"] - len(argList)):
-                            argList.append(None)
-                        for index, text in enumerate(argList):
+                        for _ in range(arg["length"] - len(arg_list)):
+                            arg_list.append(None)
+                        for index, text in enumerate(arg_list):
                             value = None
                             if arg["regex"]:
-                                value = toType(
+                                value = to_type(
                                     text if re.fullmatch(arg["regex"], text) else None,
                                     arg["type"],
                                 )
                             else:
-                                value = toType(text, arg["type"])
-                            argList[index] = value
-                        data[arg["name"]] = argList
+                                value = to_type(text, arg["type"])
+                            arg_list[index] = value
+                        data[arg["name"]] = arg_list
                     else:
                         value = None
                         if arg["regex"]:
-                            value = toType(
-                                args[argIndex]
-                                if re.fullmatch(arg["regex"], args[argIndex])
+                            value = to_type(
+                                args[arg_index]
+                                if re.fullmatch(arg["regex"], args[arg_index])
                                 else None,
                                 arg["type"],
                             )
                         else:
-                            value = toType(args[argIndex], arg["type"])
+                            value = to_type(args[arg_index], arg["type"])
                         data[arg["name"]] = value
                 elif arg["class"] == 2:
                     if arg["length"] or arg["length"] == 0:
-                        argList = (
-                            args[argIndex:]
+                        arg_list = (
+                            args[arg_index:]
                             if arg["length"] == 0
-                            else args[argIndex : 1 + arg["length"]]
+                            else args[arg_index : 1 + arg["length"]]
                         )
-                        for _ in range(arg["length"] - len(argList)):
-                            argList.append(arg["default"])
-                        for index, text in enumerate(argList):
+                        for _ in range(arg["length"] - len(arg_list)):
+                            arg_list.append(arg["default"])
+                        for index, text in enumerate(arg_list):
                             value = None
-                            if len(args) - 1 >= argIndex:
+                            if len(args) - 1 >= arg_index:
                                 if arg["regex"]:
-                                    value = toType(
+                                    value = to_type(
                                         text
                                         if re.fullmatch(arg["regex"], text)
                                         else arg["default"],
                                         arg["type"],
                                     )
                                 else:
-                                    value = toType(text, arg["type"])
+                                    value = to_type(text, arg["type"])
                             else:
-                                value = toType(arg["default"], arg["type"])
-                            argList[index] = value
-                        data[arg["name"]] = argList
+                                value = to_type(arg["default"], arg["type"])
+                            arg_list[index] = value
+                        data[arg["name"]] = arg_list
                     else:
                         value = None
-                        if len(args) - 1 >= argIndex:
+                        if len(args) - 1 >= arg_index:
                             if arg["regex"]:
-                                value = toType(
-                                    args[argIndex]
-                                    if re.fullmatch(arg["regex"], args[argIndex])
+                                value = to_type(
+                                    args[arg_index]
+                                    if re.fullmatch(arg["regex"], args[arg_index])
                                     else arg["default"],
                                     arg["type"],
                                 )
                             else:
-                                value = toType(args[argIndex], arg["type"])
+                                value = to_type(args[arg_index], arg["type"])
                         else:
-                            value = toType(arg["default"], arg["type"])
+                            value = to_type(arg["default"], arg["type"])
                         data[arg["name"]] = value
                 else:
-                    logging.error(f"{tran.run('notFoundFormat')}{arg['class']}")
-                    print(f"{tran.run('notFoundFormat')}{arg['class']}")
+                    logging.error(f"{tran.run('not_found_format')}{arg['class']}")
+                    print(f"{tran.run('not_found_format')}{arg['class']}")
             except Exception:
-                logging.error(eval(tran.run("requiredError")))
+                logging.error(eval(tran.run("required_error")))
                 print(
-                    f"\033[48;2;255;0;0;38;2;255;255;255m{eval(tran.run('requiredError'))}\033[0m"
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{eval(tran.run('required_error'))}\033[0m"
                 )
                 return
         enter(**data)
@@ -186,72 +186,72 @@ class AdminCommands:
             try:
                 print(f"{id} : {commands[id]}")
             except KeyError:
-                logging.error(f"{tran.run('notFoundCommand')}{id}")
+                logging.error(f"{tran.run('not_found_command')}{id}")
                 print(
-                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand')}{id}\033[0m"
+                    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('not_found_command')}{id}\033[0m"
                 )
 
     def create(self, id: str | None, config: str | None):
-        commandConfig = json.load(
-            open(f"{PATH}/{SETTING['commandConfig']}", encoding="utf-8")
+        command_config = json.load(
+            open(f"{PATH}/{SETTING['command_config']}", encoding="utf-8")
         )
         if id is None and config is None:
-            for id, config in commandConfig.items():
+            for id, config in command_config.items():
                 if id is None or config is None:
                     return
-                path = f"{PATH}/{SETTING['commandDir']}/{'/'.join(id.split('.'))}.py"
+                path = f"{PATH}/{SETTING['command_dir']}/{'/'.join(id.split('.'))}.py"
                 p = pathlib.Path(path)
                 if not p.exists():
                     p.touch()
-                    argsText = ""
-                    for arg in configParser(config):
-                        argsText = (
-                            f"{argsText}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str'}"
+                    args_text = ""
+                    for arg in config_parser(config):
+                        args_text = (
+                            f"{args_text}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str'}"
                             if arg["type"] == 1
                             else (
-                                f"{argsText}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str | None'}"
+                                f"{args_text}, {arg['name']}: {'list[str | None]' if arg['array'] else 'str | None'}"
                                 if arg["type"] == 2
-                                else f"{argsText}, ERROR"
+                                else f"{args_text}, ERROR"
                             )
                         )
                     open(path, "w", encoding="utf-8").write(
-                        f"def config(**args):\n    pass\n\ndef enter({argsText[2:]}):\n    pass"
+                        f"def config(**args):\n    pass\n\ndef enter({args_text[2:]}):\n    pass"
                     )
-                    logging.info(tran.run("createdFile", f"<?>{path}"))
-                    print(tran.run("createdFile", f"<?>{path}"))
+                    logging.info(tran.run("created_file", f"<?>{path}"))
+                    print(tran.run("created_file", f"<?>{path}"))
         else:
-            commandConfig[id] = "-" if config is None else config
-            open(SETTING["commandConfig"], "w", encoding="utf-8").write(
-                json.dumps(commandConfig, indent=2, ensure_ascii=False)
+            command_config[id] = "-" if config is None else config
+            open(SETTING["command_config"], "w", encoding="utf-8").write(
+                json.dumps(command_config, indent=2, ensure_ascii=False)
             )
-            print(tran.run("createdFile", f"<?>{SETTING['commandConfig']}"))
+            print(tran.run("created_file", f"<?>{SETTING['command_config']}"))
             self.create(None, None)
 
 
-def runAdminFunc(adminArgs: list[str]):
+def run_admin_func(admin_args: list[str]):
     admin = AdminCommands(SETTING["debug"])
-    adminCommands = {
+    admin_commands = {
         "help": ("- [id]", admin.help),
         "create": ("- [id] [config]", admin.create),
     }
-    adminCommands = {
-        key: adminCommands[key]
-        for key in sorted(adminCommands, key=lambda item: len(item), reverse=True)
+    admin_commands = {
+        key: admin_commands[key]
+        for key in sorted(admin_commands, key=lambda item: len(item), reverse=True)
     }
-    for command, config in adminCommands.items():
-        if command == ".".join(adminArgs[: len(command.split("."))]):
-            logging.info(tran.run("runningAdminCommand", f"<?>:{args}"))
-            runFunc(config[1], config[0], len(command.split(".")))
+    for command, config in admin_commands.items():
+        if command == ".".join(admin_args[: len(command.split("."))]):
+            logging.info(tran.run("running_admin_command", f"<?>:{args}"))
+            run_func(config[1], config[0], len(command.split(".")))
             exit()
-    logging.error(tran.run("notFoundCommand", f"<?>{args}"))
+    logging.error(tran.run("not_found_command", f"<?>{args}"))
     print(
-        f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand', f'<?>{args}')}\033[0m"
+        f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('not_found_command', f'<?>{args}')}\033[0m"
     )
 
 
 class Tran:
-    def __init__(self, translateMap: dict, lang: str):
-        self.map = translateMap
+    def __init__(self, translate_map: dict, lang: str):
+        self.map = translate_map
         self.lang = lang
 
     def run(self, key: str, content: str = "<?>"):
@@ -276,63 +276,63 @@ logging.basicConfig(
 PATH = os.path.dirname(os.path.abspath(__file__))
 TRAN = {
     "zh-cn": {
-        "requiredError": 'f"你有一个必填项未填写: 应该在第 {index} 个参数填写,参数名为 {arg["name"]}"',
-        "notFoundCommand": "未找到该命令: ",
-        "createdFile": "已创建文件至: ",
-        "fillName": "请填写参数名: ",
-        "notMatchFormat": "没有匹配此格式的参数: ",
-        "notFoundCommandFile": "检测到命令文件不存在,程序已退出",
-        "runningCommand": "正在运行命令",
-        "runningAdminCommand": "正在运行管理员命令",
-        "notFoundFormat": "没有此格式: ",
+        "required_error": 'f"你有一个必填项未填写: 应该在第 {index} 个参数填写,参数名为 {arg["name"]}"',
+        "not_found_command": "未找到该命令: ",
+        "created_file": "已创建文件至: ",
+        "fill_name": "请填写参数名: ",
+        "not_match_format": "没有匹配此格式的参数: ",
+        "not_found_commandFile": "检测到命令文件不存在,程序已退出",
+        "running_command": "正在运行命令",
+        "running_admin_command": "正在运行管理员命令",
+        "not_found_format": "没有此格式: ",
     },
     "en-us": {
-        "requiredError": 'f"You have a required parameter not filled: should be filled at position {index}, parameter name is {arg["name"]}"',
-        "notFoundCommand": "Command not found: ",
-        "createdFile": "File created at: ",
-        "fillName": "Please fill in parameter name: ",
-        "notMatchFormat": "No parameter matching this format: ",
-        "notFoundCommandFile": "Command file not detected, the program has exited",
-        "runningCommand": "Running command",
-        "runningAdminCommand": "Running admin command",
-        "notFoundFormat": "This format does not exist: ",
+        "required_error": 'f"You have a required parameter not filled: should be filled at position {index}, parameter name is {arg["name"]}"',
+        "not_found_command": "Command not found: ",
+        "created_file": "File created at: ",
+        "fill_name": "Please fill in parameter name: ",
+        "not_match_format": "No parameter matching this format: ",
+        "not_found_commandFile": "Command file not detected, the program has exited",
+        "running_command": "Running command",
+        "running_admin_command": "Running admin command",
+        "not_found_format": "This format does not exist: ",
     },
 }
 SETTING = json.load(open(f"{PATH}/setting.json", encoding="utf-8"))
 
 
-commandConfig: dict = json.load(
-    open(f"{PATH}/{SETTING['commandConfig']}", encoding="utf-8")
+command_config: dict = json.load(
+    open(f"{PATH}/{SETTING['command_config']}", encoding="utf-8")
 )
-commandConfig = {
-    key: commandConfig[key]
-    for key in sorted(commandConfig, key=lambda id: len(id), reverse=True)
+command_config = {
+    key: command_config[key]
+    for key in sorted(command_config, key=lambda id: len(id), reverse=True)
 }
 commands = {
-    key: f"{PATH}/{SETTING['commandDir']}/{'/'.join(key.split('.'))}.py"
-    for key in commandConfig
+    key: f"{PATH}/{SETTING['command_dir']}/{'/'.join(key.split('.'))}.py"
+    for key in command_config
 }
 tran = Tran(TRAN, SETTING["language"])
 args = sys.argv[1:]
 if len(args) != 0 and args[0] == "--admin":
-    runAdminFunc(args[1:])
+    run_admin_func(args[1:])
     exit()
 
 
-configArgs = {
+config_args = {
     "path": PATH,
     "lang": SETTING["language"],
     "debug": SETTING["debug"],
     "other": SETTING["other"],
     "tools": {
         "tran": Tran,
-        "configParser": configParser,
-        "runFunc": runFunc,
+        "config_parser": config_parser,
+        "run_func": run_func,
     },
 }
 
 
-for id, config in commandConfig.items():
+for id, config in command_config.items():
     if id == ".".join(args[: len(id.split("."))]):
         try:
             spec = pathImport.spec_from_file_location("func", commands[id])
@@ -341,17 +341,17 @@ for id, config in commandConfig.items():
             func = pathImport.module_from_spec(spec)
             spec.loader.exec_module(func)
         except Exception:
-            logging.warning(tran.run("notFoundCommandFile"))
+            logging.warning(tran.run("not_found_commandFile"))
             print(
-                f"\033[48;2;255;255;0;38;2;255;255;255m{tran.run('notFoundCommandFile')}\033[0m"
+                f"\033[48;2;255;255;0;38;2;255;255;255m{tran.run('not_found_commandFile')}\033[0m"
             )
             exit()
         if hasattr(func, "config"):
-            getattr(func, "config")(**configArgs)
-        logging.info(tran.run("runningCommand", f"<?>:{args}"))
-        runFunc(func.enter, config, len(args[: len(id.split("."))]) - 1)
+            getattr(func, "config")(**config_args)
+        logging.info(tran.run("running_command", f"<?>:{args}"))
+        run_func(func.enter, config, len(args[: len(id.split("."))]) - 1)
         exit()
-logging.error(tran.run("notFoundCommand", f"<?>{args}"))
+logging.error(tran.run("not_found_command", f"<?>{args}"))
 print(
-    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('notFoundCommand', f'<?>{args}')}\033[0m"
+    f"\033[48;2;255;0;0;38;2;255;255;255m{tran.run('not_found_command', f'<?>{args}')}\033[0m"
 )
