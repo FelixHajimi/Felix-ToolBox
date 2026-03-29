@@ -46,31 +46,39 @@ def config_parser(config: str):
                     "type": match2.group(5) if match2.group(5) else "string",
                 }
             )
+        elif config == "":
+            return res
         else:
             logging.error(tran.run("not_match_format", f"<?>{arg}"))
             print(f"\x1b[41;37m{tran.run('not_match_format', f'<?>{arg}')}\x1b[0m")
     return res
 
 
-def to_type(text: str | None, type_: str | None):
+def to_type(text: str | bool | None, type_: str | None):
     if text is None or type_ is None:
         return None
     mapping = {
-        "string": str,
-        "int": int,
-        "float": float,
-        "bool": bool,
-        "json": json.loads,
+        "string": (str, "str"),
+        "int": (int, "int"),
+        "float": (float, "float"),
+        "bool": (bool, "bool"),
+        "json": (json.loads, "object"),
     }
-    for t, f in mapping.items():
-        if type_ == t:
-            if type_ == "json":
-                text = text.replace("'", '"')
-            try:
-                return f(text)
-            except Exception as error:
-                logging.error(f"{tran.run('conversion_error')}{error}")
-                return None
+    if isinstance(text, str):
+        for t, f in mapping.items():
+            if type_ == t:
+                if type_ == "json":
+                    text = text.replace("'", '"')
+                try:
+                    return f[0](text)
+                except Exception as error:
+                    logging.error(f"{tran.run('conversion_error')}{error}")
+                    return None
+    elif isinstance(text, bool) and text:
+        if type_ in mapping:
+            return mapping[type_][1]
+        else:
+            return ""
 
 
 def run_func(enter, config: str, arg_start_index: int):
@@ -196,11 +204,11 @@ class AdminCommands:
                     args_text = ""
                     for arg in config_parser(config):
                         args_text = (
-                            f"{args_text}, {arg['name']}: {'list[any | None]' if arg['array'] else 'any'}"
-                            if arg["type"] == 1
+                            f"{args_text}, {arg['name']}: {f'list[{to_type(True, arg["type"])}]' if arg['length'] else f'{to_type(True, arg["type"])}'}"
+                            if arg["class"] == 1
                             else (
-                                f"{args_text}, {arg['name']}: {'list[any | None]' if arg['array'] else 'any | None'}"
-                                if arg["type"] == 2
+                                f"{args_text}, {arg['name']}: {f'list[{to_type(True, arg["type"])} | None]' if arg['length'] else f'{to_type(True, arg["type"])} | None'}"
+                                if arg["class"] == 2
                                 else f"{args_text}, ERROR"
                             )
                         )
@@ -217,12 +225,30 @@ class AdminCommands:
             print(tran.run("created_file", f"<?>{SETTING['command_config']}"))
             self.create(None, None)
 
+    def setting(self, path: str | None, value: object | None):
+        SETTING = json.load(open(f"{PATH}/setting.json", encoding="utf-8"))
+        if path is None:
+            print(json.dumps(SETTING, ensure_ascii=False, indent=2))
+        else:
+            path = "".join(
+                f"[{key[1:] if key.startswith('@') else f'"{key}"'}]"
+                for key in path.split("/")
+            )
+            if value is None:
+                print(eval(f"SETTING{path}"))
+            else:
+                exec(f"SETTING{path}={value}")
+                text = json.dumps(SETTING, ensure_ascii=False, indent=2)
+                open(f"{PATH}/setting.json", "w", encoding="utf-8").write(text)
+                print(text)
+
 
 def run_admin_func(admin_args: list[str]):
     admin = AdminCommands(SETTING["debug"])
     admin_commands = {
-        "help": ("- [id]", admin.help),
-        "create": ("- [id] [config]", admin.create),
+        "help": ("[id]", admin.help),
+        "create": ("[id] [config]", admin.create),
+        "setting": ("[path] [value]json", admin.setting),
     }
     admin_commands = {
         key: admin_commands[key]
