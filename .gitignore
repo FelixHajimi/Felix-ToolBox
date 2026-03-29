@@ -19,6 +19,9 @@ build
 # Program
 slim.exe
 
+# Zed
+.zed
+
 # Test
 test.*
 test

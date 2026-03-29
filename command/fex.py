@@ -6,24 +6,24 @@ import os
 
 class Tran:
     def __init__(self, translateMap: dict, lang: str):
-        ...
+        self.map: dict
+        self.lang: str
 
-    def run(self, key: str, content: str = "<?>") -> str:
-        ...
+    def run(self, key: str, content: str = "<?>") -> str: ...
 
 
 tran: Tran
 TRAN = {
     "zh-cn": {
-        "encodingError": "请检查打开编码是否正确: ",
-        "successExit": "成功退出",
-        "fileCharCount": "f'此文件共有 {len('\\n'.join(fileContent))} 个字符'",
-        "lineCharCount": "f'第 {int(command[1])} 行有 {len(fileContent[int(command[1]) - 1])} 个字符'",
+        "encoding_error": "请检查打开编码是否正确: ",
+        "success_exit": "成功退出",
+        "file_char_count": "f'此文件共有 {len('\\n'.join(fileContent))} 个字符'",
+        "line_char_count": "f'第 {int(command[1])} 行有 {len(fileContent[int(command[1]) - 1])} 个字符'",
         "using": "用法: ",
         "error": "错误: ",
         "saveto": "文件已保存至 ",
-        "successExec": "执行成功",
-        "notFoundCommand": "未找到该命令",
+        "success_exec": "执行成功",
+        "not_found_command": "未找到该命令",
         "save": "已保存文件至 ",
         "help": "移动光标:方向键|进入命令模式:ESC|命令模式(退出q|保存s|写入模式w|帮助h|更多帮助H)|写入模式(按下键盘按键即可写入)",
         "Help": """FEX 使用帮助
@@ -44,15 +44,15 @@ TRAN = {
     [*]            在文件对应位置写入文本""",
     },
     "en-us": {
-        "encodingError": "Please check if the opened encoding is correct: ",
-        "successExit": "Exited successfully",
-        "fileCharCount": "f'This file has {len('\\n'.join(fileContent))} characters'",
-        "lineCharCount": "f'Line {int(command[1])} has {len(fileContent[int(command[1]) - 1])} characters'",
+        "encoding_error": "Please check if the opened encoding is correct: ",
+        "success_exit": "Exited successfully",
+        "file_char_count": "f'This file has {len('\\n'.join(fileContent))} characters'",
+        "line_char_count": "f'Line {int(command[1])} has {len(fileContent[int(command[1]) - 1])} characters'",
         "using": "Usage: ",
         "error": "Error: ",
         "saveto": "File has been saved to ",
-        "successExec": "Executed successfully",
-        "notFoundCommand": "Command not found",
+        "success_exec": "Executed successfully",
+        "not_found_command": "Command not found",
         "save": "File saved to ",
         "help": "Move cursor: arrow keys | Enter command mode: ESC | Command mode (exit q | save s | write mode w | help h | more help H) | Write mode (press any key to write)",
         "Help": """FEX Help
@@ -96,7 +96,7 @@ def enter(path: str, encoding: str, plugin: str):
             if not fileContent:
                 fileContent = [""]
         except UnicodeDecodeError:
-            print(f"{tran.run('encodingError')}{encoding}")
+            print(f"{tran.run('encoding_error')}{encoding}")
             return
 
         def runCommand(text: str):
@@ -104,13 +104,13 @@ def enter(path: str, encoding: str, plugin: str):
             command = text.split(" ")
             if command == ["quit"]:
                 run = False
-                return tran.run("successExit")
+                return tran.run("success_exit")
             elif command[0] == "length":
                 try:
                     if len(command) == 1:
-                        return eval(tran.run("fileCharCount"))
+                        return eval(tran.run("file_char_count"))
                     elif len(command) == 2:
-                        return eval(tran.run("lineCharCount"))
+                        return eval(tran.run("line_char_count"))
                     else:
                         return f"{tran.run('using')}length [lineNumber]"
                 except Exception as error:
@@ -147,14 +147,14 @@ def enter(path: str, encoding: str, plugin: str):
             elif command[0] == "exec":
                 try:
                     exec(" ".join(command[1:]))
-                    return tran.run("successExec")
+                    return tran.run("success_exec")
                 except Exception as error:
                     return f"{tran.run('error')}{error}"
             for func in commands:
                 text = func(command)
                 if text:
                     return text
-            return tran.run("notFoundCommand")
+            return tran.run("not_found_command")
 
         curses.start_color()
         curses.use_default_colors()
