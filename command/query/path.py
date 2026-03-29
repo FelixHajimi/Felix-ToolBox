@@ -6,28 +6,28 @@ import time
 
 class Tran:
     def __init__(self, translateMap: dict, lang: str):
-        ...
+        self.map: dict
+        self.lang: str
 
-    def run(self, key: str, content: str = "<?>") -> str:
-        ...
+    def run(self, key: str, content: str = "<?>") -> str: ...
 
 
 tran: Tran
 TRANMAP = {
     "zh-cn": {
-        "isFile": "文件?               ",
+        "is_file": "文件?               ",
         "size": "大小                ",
-        "lastModify": "最后修改时间        ",
-        "lastRead": "最后访问时间        ",
-        "createOrChange": "创建/变更时间       ",
+        "last_modify": "最后修改时间        ",
+        "last_visit": "最后访问时间        ",
+        "create_or_change": "创建/变更时间       ",
         "mode": "模式                ",
     },
     "en-us": {
-        "isFile": "Is file?            ",
+        "is_file": "Is file?            ",
         "size": "Size                ",
-        "lastModify": "Last modify time    ",
-        "lastVisit": "Last visit time     ",
-        "createOrChange": "Create/Change time  ",
+        "last_modify": "Last modify time    ",
+        "last_visit": "Last visit time     ",
+        "create_or_change": "Create/Change time  ",
         "mode": "mode                ",
     },
 }
@@ -57,11 +57,11 @@ def enter(path: str | None):
         print(
             f"""
 {p.resolve()}
-{tran.run("isFile")}{p.is_file()}
+{tran.run("is_file")}{p.is_file()}
 {tran.run("size")}{calcSize(p.stat().st_size, 0) if p.is_file() else "<DIR>"}
-{tran.run("lastModify")}{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.stat().st_mtime))}
-{tran.run("lastVisit")}{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.stat().st_atime))}
-{tran.run("createOrChange")}{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.stat().st_ctime))}
+{tran.run("last_modify")}{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.stat().st_mtime))}
+{tran.run("last_visit")}{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.stat().st_atime))}
+{tran.run("create_or_change")}{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(p.stat().st_ctime))}
 {tran.run("mode")}{stat.filemode(p.stat().st_mode)}
 """
         )
