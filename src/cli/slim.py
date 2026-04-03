@@ -21,8 +21,8 @@ def config_parser(config: str):
         )
         if match1:
             if not match1.group(1):
-                logging.error(tran.run("fill_name", f"<?>{arg}"))
-                print(f"\x1b[41;37m{tran.run('fill_name', f'<?>{arg}')}\x1b[0m")
+                logging.error(tran.run("fill_name")+arg)
+                print(f"\x1b[41;37m{tran.run('fill_name')}{arg}\x1b[0m")
             res.append(
                 {
                     "class": 1,
@@ -34,8 +34,8 @@ def config_parser(config: str):
             )
         elif match2:
             if not match2.group(1):
-                logging.error(tran.run("fill_name", f"<?>{arg}"))
-                print(f"\x1b[41;37m{tran.run('fill_name', f'<?>{arg}')}\x1b[0m")
+                logging.error(tran.run("fill_name")+arg)
+                print(f"\x1b[41;37m{tran.run('fill_name')}{arg}\x1b[0m")
             res.append(
                 {
                     "class": 2,
@@ -49,8 +49,8 @@ def config_parser(config: str):
         elif config == "":
             return res
         else:
-            logging.error(tran.run("not_match_format", f"<?>{arg}"))
-            print(f"\x1b[41;37m{tran.run('not_match_format', f'<?>{arg}')}\x1b[0m")
+            logging.error(tran.run("not_match_format")+arg)
+            print(f"\x1b[41;37m{tran.run('not_match_format')}{arg}\x1b[0m")
     return res
 
 
@@ -215,14 +215,14 @@ class AdminCommands:
                     open(path, "w", encoding="utf-8").write(
                         f"def config(**args):\n    pass\n\ndef enter({args_text[2:]}):\n    pass"
                     )
-                    logging.info(tran.run("created_file", f"<?>{path}"))
-                    print(tran.run("created_file", f"<?>{path}"))
+                    logging.info(tran.run("created_file")+path)
+                    print(tran.run("created_file")+path)
         else:
             command_config[id] = "-" if config is None else config
             open(SETTING["command_config"], "w", encoding="utf-8").write(
                 json.dumps(command_config, indent=2, ensure_ascii=False)
             )
-            print(tran.run("created_file", f"<?>{SETTING['command_config']}"))
+            print(tran.run("created_file")+SETTING['command_config'])
             self.create(None, None)
 
     def setting(self, path: str | None, value: object | None):
@@ -256,11 +256,11 @@ def run_admin_func(admin_args: list[str]):
     }
     for command, config in admin_commands.items():
         if command == ".".join(admin_args[: len(command.split("."))]):
-            logging.info(tran.run("running_admin_command", f"<?>:{args}"))
+            logging.info(tran.run("running_admin_command")+str(args))
             run_func(config[1], config[0], len(command.split(".")))
             return
-    logging.error(tran.run("not_found_command", f"<?>{args}"))
-    print(f"\x1b[41;37m{tran.run('not_found_command', f'<?>{args}')}\x1b[0m")
+    logging.error(tran.run("not_found_command")+str(args))
+    print(f"\x1b[41;37m{tran.run('not_found_command')}{args}\x1b[0m")
 
 
 class Tran:
@@ -268,7 +268,7 @@ class Tran:
         self.map = translate_map
         self.lang = lang
 
-    def run(self, key: str, content: str = "<?>"):
+    def run(self, key: str):
         if self.lang not in self.map:
             if "en-us" in self.map:
                 language = "en-us"
@@ -276,7 +276,7 @@ class Tran:
                 language = next(iter(self.map))
         else:
             language = self.lang
-        return content.replace("<?>", self.map[language][key])
+        return self.map[language][key]
 
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -294,8 +294,8 @@ TRAN = {
         "fill_name": "请填写参数名: ",
         "not_match_format": "没有匹配此格式的参数: ",
         "run_command_error": "命令不存在或命令运行错误,程序已退出",
-        "running_command": "正在运行命令",
-        "running_admin_command": "正在运行管理员命令",
+        "running_command": "正在运行命令: ",
+        "running_admin_command": "正在运行管理员命令: ",
         "not_found_format": "没有此格式: ",
         "conversion_error": "转换错误: ",
     },
@@ -306,8 +306,8 @@ TRAN = {
         "fill_name": "Please fill in parameter name: ",
         "not_match_format": "No parameter matching this format: ",
         "run_command_error": "The command does not exist or the command execution failed, the program has exited",
-        "running_command": "Running command",
-        "running_admin_command": "Running admin command",
+        "running_command": "Running command: ",
+        "running_admin_command": "Running admin command: ",
         "not_found_format": "This format does not exist: ",
         "conversion_error": "Conversion error: ",
     },
@@ -360,11 +360,11 @@ for id, config in command_enter.items():
             spec.loader.exec_module(func)
             if hasattr(func, "config"):
                 getattr(func, "config")(**config_args)
-            logging.info(tran.run("running_command", f"<?>:{args}"))
+            logging.info(tran.run("running_command")+str(args))
             run_func(func.enter, config, len(args[: len(id.split("."))]) - 1)
         except Exception:
             logging.warning(tran.run("run_command_error"))
             print(f"\x1b[43;37m{tran.run('run_command_error')}\x1b[0m")
         quit()
-logging.error(tran.run("not_found_command", f"<?>{args}"))
-print(f"\x1b[41;37m{tran.run('not_found_command', f'<?>{args}')}\x1b[0m")
+logging.error(tran.run("not_found_command")+str(args))
+print(f"\x1b[41;37m{tran.run('not_found_command')}{args}\x1b[0m")
