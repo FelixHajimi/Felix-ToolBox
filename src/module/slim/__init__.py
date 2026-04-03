@@ -19,8 +19,8 @@ def config_parser(config: str):
         )
         if match1:
             if not match1.group(1):
-                logging.error(tran.run("fill_name", f"<?>{arg}"))
-                print(f"\x1b[41;37m{tran.run('fill_name', f'<?>{arg}')}\x1b[0m")
+                logging.error(tran.run("fill_name") + arg)
+                print(f"\x1b[41;37m{tran.run('fill_name')}{arg}\x1b[0m")
             res.append(
                 {
                     "class": 1,
@@ -32,8 +32,8 @@ def config_parser(config: str):
             )
         elif match2:
             if not match2.group(1):
-                logging.error(tran.run("fill_name", f"<?>{arg}"))
-                print(f"\x1b[41;37m{tran.run('fill_name', f'<?>{arg}')}\x1b[0m")
+                logging.error(tran.run("fill_name") + arg)
+                print(f"\x1b[41;37m{tran.run('fill_name')}{arg}\x1b[0m")
             res.append(
                 {
                     "class": 2,
@@ -47,8 +47,8 @@ def config_parser(config: str):
         elif config == "":
             return res
         else:
-            logging.error(tran.run("not_match_format", f"<?>{arg}"))
-            print(f"\x1b[41;37m{tran.run('not_match_format', f'<?>{arg}')}\x1b[0m")
+            logging.error(tran.run("not_match_format") + arg)
+            print(f"\x1b[41;37m{tran.run('not_match_format')}{arg}\x1b[0m")
     return res
 
 
@@ -158,8 +158,8 @@ def run_func(enter, config: str, arg_start_index: int):
                 else:
                     logging.error(f"{tran.run('not_found_format')}{arg['class']}")
                     print(f"{tran.run('not_found_format')}{arg['class']}")
-            except Exception:
-                logging.error(eval(tran.run("required_error")))
+            except Exception as error:
+                logging.error(eval(tran.run("required_error")) + f"\nERROR: {error}")
                 print(f"\x1b[41;37m{eval(tran.run('required_error'))}\x1b[0m")
                 return
         enter(**data)
@@ -169,7 +169,44 @@ class AdminCommands:
     def __init__(self, debug: bool = False):
         self.debug = debug
 
-    def setting(self, path: str | None, value: object | None):
+    def help(self, args: list[str | None]):
+        text = ""
+        if "--id" in args and args[-1:] != "--id":
+            key = args[args.index("--id") + 1]
+            if key not in command_enter:
+                print(tran.run("not_found_command") + str(key))
+                return
+            text = f"{key} : {command_enter[key][1]}"
+            if "--func" in args:
+                text += f"({command_enter[key][0]})"
+            config_args = {
+                "path": PATH,
+                "lang": SETTING["language"],
+                "debug": SETTING["debug"],
+                "other": SETTING["other"],
+                "tools": {
+                    "Tran": Tran,
+                    "config_parser": config_parser,
+                    "run_func": run_func,
+                    "to_type": to_type,
+                    "AdminCommands": AdminCommands,
+                    "run_admin_func": run_admin_func,
+                },
+            }
+            if hasattr(command_enter[key][0], "config"):
+                getattr(command_enter[key][0], "config")(**config_args)
+            if hasattr(command_enter[key][0], "help"):
+                text += "\n\n" + getattr(command_enter[key][0], "help")()
+        else:
+            for command_id, (func, config) in command_enter.items():
+                text += f"{command_id} : {config}"
+                if "--func" in args:
+                    text += f"({func})"
+                text += "\n"
+            text = text[:-1]
+        print(text)
+
+    def setting(self, path: str | None, value: str | None):
         SETTING = json.load(open(f"{PATH}/setting.json", encoding="utf-8"))
         if path is None:
             print(json.dumps(SETTING, ensure_ascii=False, indent=2))
@@ -190,19 +227,28 @@ class AdminCommands:
 def run_admin_func(admin_args: list[str]):
     admin = AdminCommands(SETTING["debug"])
     admin_commands = {
-        "setting": ("[path] [value]json", admin.setting),
+        "help": (admin.help, "[args:0]"),
+        "setting": (admin.setting, "[path] [value]"),
     }
     admin_commands = {
         key: admin_commands[key]
         for key in sorted(admin_commands, key=lambda item: len(item), reverse=True)
     }
-    for command, config in admin_commands.items():
-        if command == ".".join(admin_args[: len(command.split("."))]):
-            logging.info(tran.run("running_admin_command", f"<?>:{args}"))
-            run_func(config[1], config[0], len(command.split(".")))
+    for command_id, (func, config) in admin_commands.items():
+        if command_id == ".".join(admin_args[: len(command_id.split("."))]):
+            logging.info(tran.run("running_admin_command") + str(args))
+            if "command" in SETTING and id in SETTING["command"]:
+                for key in SETTING["command"][id].keys():
+                    SETTING[key] = SETTING["command"][id][key]
+            try:
+                logging.info(tran.run("running_command") + str(args))
+                run_func(func, config, len(command_id.split(".")))
+            except Exception as error:
+                logging.warning(tran.run("run_command_error") + f"\nERROR: {error}")
+                print(f"\x1b[43;37m{tran.run('run_command_error')}\x1b[0m")
             return
-    logging.error(tran.run("not_found_command", f"<?>{args}"))
-    print(f"\x1b[41;37m{tran.run('not_found_command', f'<?>{args}')}\x1b[0m")
+    logging.error(tran.run("not_found_command") + str(args))
+    print(f"\x1b[41;37m{tran.run('not_found_command')}{args}\x1b[0m")
 
 
 class Tran:
@@ -210,7 +256,7 @@ class Tran:
         self.map = translate_map
         self.lang = lang
 
-    def run(self, key: str, content: str = "<?>"):
+    def run(self, key: str):
         if self.lang not in self.map:
             if "en-us" in self.map:
                 language = "en-us"
@@ -218,7 +264,7 @@ class Tran:
                 language = next(iter(self.map))
         else:
             language = self.lang
-        return content.replace("<?>", self.map[language][key])
+        return self.map[language][key]
 
 
 def run():
@@ -253,14 +299,14 @@ def run():
             try:
                 if hasattr(command, "config"):
                     getattr(command, "config")(**config_args)
-                logging.info(tran.run("running_command", f"<?>:{args}"))
+                logging.info(tran.run("running_command") + str(args))
                 run_func(command.enter, config, len(args[: len(id.split("."))]) - 1)
-            except Exception:
-                logging.warning(tran.run("run_command_error"))
+            except Exception as error:
+                logging.warning(tran.run("run_command_error") + f"\nERROR: {error}")
                 print(f"\x1b[43;37m{tran.run('run_command_error')}\x1b[0m")
             quit()
-    logging.error(tran.run("not_found_command", f"<?>{args}"))
-    print(f"\x1b[41;37m{tran.run('not_found_command', f'<?>{args}')}\x1b[0m")
+    logging.error(tran.run("not_found_command") + str(args))
+    print(f"\x1b[41;37m{tran.run('not_found_command')}{args}\x1b[0m")
 
 
 logging.basicConfig(
@@ -274,24 +320,22 @@ TRAN = {
     "zh-cn": {
         "required_error": 'f"你有一个必填项未填写: 应该在第 {index} 个参数填写,参数名为 {arg["name"]}"',
         "not_found_command": "未找到该命令: ",
-        "created_file": "已创建文件至: ",
         "fill_name": "请填写参数名: ",
         "not_match_format": "没有匹配此格式的参数: ",
         "run_command_error": "命令不存在或命令运行错误,程序已退出",
-        "running_command": "正在运行命令",
-        "running_admin_command": "正在运行管理员命令",
+        "running_command": "正在运行命令: ",
+        "running_admin_command": "正在运行管理员命令: ",
         "not_found_format": "没有此格式: ",
         "conversion_error": "转换错误: ",
     },
     "en-us": {
         "required_error": 'f"You have a required parameter not filled: should be filled at position {index}, parameter name is {arg["name"]}"',
         "not_found_command": "Command not found: ",
-        "created_file": "File created at: ",
         "fill_name": "Please fill in parameter name: ",
         "not_match_format": "No parameter matching this format: ",
         "run_command_error": "The command does not exist or the command execution failed, the program has exited",
-        "running_command": "Running command",
-        "running_admin_command": "Running admin command",
+        "running_command": "Running command: ",
+        "running_admin_command": "Running admin command: ",
         "not_found_format": "This format does not exist: ",
         "conversion_error": "Conversion error: ",
     },

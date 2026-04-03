@@ -53,7 +53,7 @@ class Tran:
         self.map: dict
         self.lang: str
 
-    def run(self, key: str, content: str = "<?>") -> str: ...
+    def run(self, key: str) -> str: ...
 
 
 tran: Tran
@@ -115,4 +115,4 @@ def enter(mode: str, data: str, configs: str | None):
     elif mode == "help":
         print(tran.run("help"))
     else:
-        print(tran.run("notFoundMode", f"<?> {mode}"))
+        print(tran.run("notFoundMode")+mode)

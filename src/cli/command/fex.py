@@ -9,7 +9,7 @@ class Tran:
         self.map: dict
         self.lang: str
 
-    def run(self, key: str, content: str = "<?>") -> str: ...
+    def run(self, key: str) -> str: ...
 
 
 tran: Tran
